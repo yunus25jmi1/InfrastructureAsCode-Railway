@@ -216,50 +216,43 @@ docker exec [container] rclone config show
 docker exec [container] rclone ls ${CLOUD_NAME}:
 ```
 
-## License
-MIT License - See [LICENSE](LICENSE) for full text.
+```markdown
+## Appendix
 
----
+### Project Structure
 
-**Maintenance Tips**:
-- Rotate `TAILSCALE_AUTHKEY` every 90 days
-- Monitor Tailscale Admin Console regularly
-- Use `rclone config reconnect` for storage tokens
-- Enable 2FA on all connected services
-
-**Appendix**:
-- [Project Structure](#project-structure)
-- [Network Architecture Diagram](#network-architecture)
-#project-structure 
+```
 yunus25jmi1-infrastructureascode-railway/
-├── 📁 app/                     # Flask Web Application
-│   ├── app.py                # Main application logic
-│   ├── requirements.txt      # Python dependencies
-│   ├── start.sh              # Application startup script
-│   └── wsgi.py               # WSGI entry point
+├── app/                         # Flask web application
+│   ├── app.py                   # Main application logic
+│   ├── requirements.txt         # Python dependencies
+│   ├── start.sh                 # App startup script
+│   └── wsgi.py                  # WSGI entry point
 │
-├── 📁 deploy-container/       # Deployment configurations
-│   ├── entrypoint.sh        # Container initialization script
-│   ├── rclone-tasks.json    # Rclone automation tasks
-│   └── settings.json        # VSCode server settings
+├── deploy-container/            # Deployment configurations
+│   ├── entrypoint.sh            # Container init script
+│   ├── rclone-tasks.json        # Rclone automation config
+│   └── settings.json            # VSCode server settings
 │
-├── 📁 stubby/                 # DNS-over-TLS configuration
-│   └── stubby.yml           # Stubby DNS privacy setup
+├── stubby/                      # DNS-over-TLS config
+│   └── stubby.yml               # DNS privacy settings
 │
-├── 📄 Dockerfile             # Multi-stage container build
-├── 📄 LICENSE                # MIT License
-├── 📄 README.md              # Project documentation
-├── 📄 app.json               # Heroku app manifest
-├── 📄 heroku.yml             # Heroku Docker config
-├── 📄 install.sh             # Rclone installation script
-├── 📄 openssh.sh             # SSH+Ngrok startup script
-├── 📄 rclone.conf            # Rclone cloud storage config
-├── 📄 rclone_conf.sh         # Config encoding helper
-├── 📄 render.yaml            # Render.com deployment config
-├── 📄 run.sh                 # Rclone service manager
-├── 📄 sftp.json              # SFTP client configuration
-├── 📄 start.sh               # Main entrypoint script
-└── 📄 stubby.yml             # DNS privacy config (symlink)
+├── Dockerfile                   # Multi-stage container build
+├── LICENSE                      # MIT License
+├── README.md                    # Project documentation
+├── app.json                     # Heroku app manifest
+├── heroku.yml                   # Heroku deployment config
+├── install.sh                   # Rclone installer
+├── openssh.sh                   # SSH+Ngrok manager
+├── rclone.conf                  # Cloud storage config
+├── rclone_conf.sh               # Config encoder
+├── render.yaml                  # Render.com IaC config
+├── run.sh                       # Rclone service control
+├── sftp.json                    # SFTP client config
+└── start.sh                     # Main entrypoint script
+```
+
+### Network Architecture Diagram
 
 ```mermaid
 graph TD
@@ -291,4 +284,29 @@ graph TD
     style D fill:#f,stroke:#333
     style E fill:#f,stroke:#333
     style F fill:#f,stroke:#333
+
 ```
+
+### Key Components
+
+| Component           | Description                                  | Key Files                     |
+|---------------------|----------------------------------------------|-------------------------------|
+| **Web Application** | Flask-based web interface                    | `app/`, `Dockerfile`          |
+| **VPN Access**      | Tailscale secure networking                  | `start-tailscale.sh`          |
+| **SSH Tunnel**      | Ngrok-managed secure access                  | `openssh.sh`                  |
+| **Cloud Storage**   | Rclone cloud integration                     | `rclone.conf`, `run.sh`       |
+| **DNS Security**    | Stubby DNS-over-TLS configuration           | `stubby/stubby.yml`           |
+| **Deployment**      | Multi-cloud deployment configs               | `render.yaml`, `heroku.yml`   |
+```
+**Maintenance Tips**:
+- Rotate `TAILSCALE_AUTHKEY` every 90 days
+- Monitor Tailscale Admin Console regularly
+- Use `rclone config reconnect` for storage tokens
+- Enable 2FA on all connected services
+
+
+## License
+MIT License - See [LICENSE](LICENSE) for full text.
+
+---
+
