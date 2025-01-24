@@ -2,7 +2,7 @@ Here's the updated README.md with Tailscale VPN integration details:
 
 # Infrastructure as Code Railway Deployment
 
-![Project Architecture](https://via.placeholder.com/800x400.png?text=Network+Architecture+Diagram)
+![Project Architecture](/assets/mermaid-diagram-2025-01-24-220128.png)
 
 A secure infrastructure deployment solution featuring automated VPN access, SSH tunneling, and cloud storage integration.
 
