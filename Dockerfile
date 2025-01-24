@@ -23,23 +23,27 @@ RUN apt-get update && apt-get install -y \
     ssh wget curl vim python3 sudo tmux net-tools iputils-ping gnupg lsb-release \
     && apt-get clean
 
-# Install Tailscale
-RUN curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/jammy.noarmor.gpg | tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null && \
-    curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/jammy.tailscale-keyring.list | tee /etc/apt/sources.list.d/tailscale.list && \
-    apt-get update && \
-    apt-get install -y tailscale && \
-    apt-get clean
+# Install Tailscale using official install script
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    && curl -fsSL https://tailscale.com/install.sh | sh -s -- \
+        --skip-apt-update \
+        --skip-start \
+        --accept-license \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Add Ngrok repository and install it
-RUN mkdir -p /etc/apt/keyrings && \
-    curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | \
-    gpg --dearmor -o /etc/apt/keyrings/ngrok.gpg && \
-    echo "deb [signed-by=/etc/apt/keyrings/ngrok.gpg] https://ngrok-agent.s3.amazonaws.com buster main" | \
+# Install Ngrok using official repository
+RUN mkdir -p /etc/apt/trusted.gpg.d && \
+    curl -fsSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc | \
+    tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null && \
+    echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | \
     tee /etc/apt/sources.list.d/ngrok.list && \
     apt-get update && \
     apt-get install -y ngrok && \
     apt-get clean
-
 
 # Configure SSH
 RUN mkdir /run/sshd && \
