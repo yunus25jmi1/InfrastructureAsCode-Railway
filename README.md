@@ -230,6 +230,36 @@ MIT License - See [LICENSE](LICENSE) for full text.
 **Appendix**:
 - [Project Structure](#project-structure)
 - [Network Architecture Diagram](#network-architecture)
+#project-structure 
+yunus25jmi1-infrastructureascode-railway/
+├── 📁 app/                     # Flask Web Application
+│   ├── app.py                # Main application logic
+│   ├── requirements.txt      # Python dependencies
+│   ├── start.sh              # Application startup script
+│   └── wsgi.py               # WSGI entry point
+│
+├── 📁 deploy-container/       # Deployment configurations
+│   ├── entrypoint.sh        # Container initialization script
+│   ├── rclone-tasks.json    # Rclone automation tasks
+│   └── settings.json        # VSCode server settings
+│
+├── 📁 stubby/                 # DNS-over-TLS configuration
+│   └── stubby.yml           # Stubby DNS privacy setup
+│
+├── 📄 Dockerfile             # Multi-stage container build
+├── 📄 LICENSE                # MIT License
+├── 📄 README.md              # Project documentation
+├── 📄 app.json               # Heroku app manifest
+├── 📄 heroku.yml             # Heroku Docker config
+├── 📄 install.sh             # Rclone installation script
+├── 📄 openssh.sh             # SSH+Ngrok startup script
+├── 📄 rclone.conf            # Rclone cloud storage config
+├── 📄 rclone_conf.sh         # Config encoding helper
+├── 📄 render.yaml            # Render.com deployment config
+├── 📄 run.sh                 # Rclone service manager
+├── 📄 sftp.json              # SFTP client configuration
+├── 📄 start.sh               # Main entrypoint script
+└── 📄 stubby.yml             # DNS privacy config (symlink)
 
 ```mermaid
 graph TD
