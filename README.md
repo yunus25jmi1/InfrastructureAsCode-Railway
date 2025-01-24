@@ -1,21 +1,21 @@
-Here's the updated README.md with Tailscale VPN integration details:
-
+```markdown
 # Infrastructure as Code Railway Deployment
 
-![Project Architecture](/assets/mermaid-diagram-2025-01-24-220128.png)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Docker Build](https://img.shields.io/badge/Docker-Ready-blue)](Dockerfile)
+[![Tailscale VPN](https://img.shields.io/badge/Tailscale-Integrated-7B68EE)](https://tailscale.com)
 
-A secure infrastructure deployment solution featuring automated VPN access, SSH tunneling, and cloud storage integration.
+A secure, containerized infrastructure solution combining cloud storage, VPN access, and web services with automated deployment.
 
 ## Features
 
-- 🐳 Docker-based infrastructure with multi-stage builds
-- 🌐 Flask web application with Gunicorn server
-- 🔒 Secure SSH access via Ngrok tunneling
-- ☁️ Rclone integration for cloud storage management
-- 🛡️ **Automatic Tailscale VPN** with subnet routing
-- 📡 DNS-over-TLS with Stubby configuration
-- 🔑 MagicDNS for human-readable hostnames
-- 📦 Deployment-ready for Heroku/Render
+- 🐳 **Docker Containerization**
+- 🌐 **Flask Web Application**
+- 🔒 **SSH Access via Ngrok Tunnel**
+- ☁️ **Rclone Cloud Storage Integration**
+- 🛡️ **Tailscale VPN with ACL Controls**
+- 📡 **DNS-over-TLS (Stubby Configuration)**
+- 🔄 **Automated CI/CD Ready**
 
 ## Prerequisites
 
@@ -23,7 +23,7 @@ A secure infrastructure deployment solution featuring automated VPN access, SSH 
 - [Tailscale Account](https://tailscale.com)
 - Ngrok Auth Token
 - Python 3.12+
-- Cloud Storage Provider (Google Drive, etc.)
+- Cloud Storage Account (Google Drive/Dropbox/etc)
 
 ## Installation
 
@@ -35,48 +35,76 @@ cp .env.example .env
 
 ## Configuration
 
-### Environment Variables (.env)
+### Environment Variables (`.env`)
 ```ini
-# Core
-NGROK_TOKEN=your_ngrok_token
+# Core Configuration
+NGROK_TOKEN=your_ngrok_auth_token
 PORT=22
 
 # Tailscale VPN
-TAILSCALE_AUTHKEY=tskey-auth-xxxxxxxxx  # REQUIRED
+TAILSCALE_AUTHKEY=tskey-auth-xxxxxxxx
 TAILSCALE_HOSTNAME=railway-vpn
-TAILSCALE_ADVERTISE_ROUTES=10.0.0.0/24,192.168.1.0/24
-TAILSCALE_TAGS=tag:ssh-server,tag:production
+TAILSCALE_ADVERTISE_ROUTES=10.0.0.0/24
 
-# Rclone
-CLOUD_NAME=your-cloud-storage
+# Rclone Storage
+CLOUD_NAME=your-cloud-config-name
 SUB_DIR=/backups
 BASE_CONF=base64_encoded_rclone_config
 ```
 
 ### Tailscale Setup
-1. **Create Auth Key**:
-   - Go to [Tailscale Admin Console](https://login.tailscale.com/admin/settings/keys)
-   - Generate reusable key with:
+1. **Generate Auth Key**:
+   - Go to [Tailscale Admin Console → Keys](https://login.tailscale.com/admin/settings/keys)
+   - Create key with:
      - Ephemeral: Enabled
      - Tags: `tag:ssh-server`
      - Expiry: 90 days
 
-2. **Configure ACLs** (optional):
+2. **ACL Configuration** (`tailscale-policy.json`):
 ```json
 {
   "acls": [
     {
       "action": "accept",
-      "src": ["autogroup:members"],
+      "src": ["your-email@domain.com"],
       "dst": ["tag:ssh-server:*"]
+    }
+  ],
+  "tagOwners": {
+    "tag:ssh-server": ["your-email@domain.com"],
+    "tag:vpn": ["your-email@domain.com"]
+  },
+  "ssh": [
+    {
+      "action": "check",
+      "src": ["your-email@domain.com"],
+      "dst": ["tag:ssh-server"],
+      "users": ["root"]
     }
   ]
 }
 ```
 
+### Rclone Setup
+1. Generate Configuration:
+```bash
+rclone config
+```
+
+2. Encode Configuration:
+```bash
+cat ~/.config/rclone/rclone.conf | base64 --wrap=0
+```
+
+3. Update `.env` with:
+```ini
+BASE_CONF=generated_base64_string
+CLOUD_NAME=your_config_section_name
+```
+
 ## Deployment
 
-### Local Docker Setup
+### Local Docker
 ```bash
 docker build -t infra-railway .
 docker run -d --env-file .env \
@@ -86,123 +114,151 @@ docker run -d --env-file .env \
   infra-railway
 ```
 
-### Cloud Deployment (Heroku/Render)
-1. Add environment variables to your cloud provider
-2. Enable these permissions:
-   - **NET_ADMIN** capability
-   - **Persistent storage** (for Rclone)
-3. Deploy using included `heroku.yml` or `render.yaml`
-
-## VPN & Network Access
-
-### Connect via Tailscale
+### Heroku
+1. Set environment variables in Heroku Dashboard
+2. Deploy:
 ```bash
-# Install Tailscale client
-curl -fsSL https://tailscale.com/install.sh | sh
-
-# Connect to your network
-tailscale up --ssh
+heroku container:push web
+heroku container:release web
 ```
 
-### Access Methods
-| Service       | Protocol | Address                    |
-|---------------|----------|----------------------------|
-| SSH           | TCP      | `railway-vpn:22`           |
-| Web Interface | HTTP     | `railway-vpn:5000`         |
-| SFTP          | SSH      | `sftp://railway-vpn:22`    |
-| VPN Subnets   | -        | `10.0.0.0/24, 192.168.1.0/24` |
+### Render
+1. Create new Web Service using `render.yaml`
+2. Set environment variables:
+   - `TAILSCALE_AUTHKEY`
+   - `NGROK_TOKEN`
+   - `BASE_CONF`
 
-## Usage Examples
+## Usage
 
-### SSH Access via VPN
+### SSH Access
 ```bash
+# Via Tailscale
 ssh root@railway-vpn
-# Password: Demo1234
+
+# Via Ngrok (Fallback)
+ssh root@[ngrok_host] -p [ngrok_port]
+Password: Demo1234
 ```
 
-### Mount Cloud Storage
-```bash
-# Local mount point
-mkdir -p /mnt/cloud-storage
+### Web Interface
+Access at `http://localhost:5000` or your deployment URL
 
-# Mount via SSHFS
-sshfs -o allow_other root@railway-vpn:/app/storage /mnt/cloud-storage
+### Cloud Storage
+```bash
+# SFTP Access
+sftp -P 2022 root@railway-vpn
+
+# Mount Storage
+sshfs -p 2022 root@railway-vpn:/storage /mnt/cloud
 ```
 
-### Verify VPN Status
+### VPN Management
 ```bash
-# Check advertised routes
+# Check VPN Status
 tailscale status
 
-# Test connectivity
-tailscale ping railway-vpn
+# Advertise Routes
+tailscale up --advertise-routes=10.0.0.0/24
 ```
 
-## Security Configuration
+## Security
 
-1. **Rotate Credentials**:
+1. **First Run Checklist**:
    ```bash
-   # Change SSH password
+   # Change SSH Password
    echo "root:$(openssl rand -base64 12)" | chpasswd
 
-   # Rotate Tailscale key
+   # Rotate Tailscale Key
    tailscale logout && tailscale up --authkey=new-key
    ```
 
-2. **Network Hardening**:
+2. **Firewall Rules**:
    ```bash
-   # Restrict SSH to VPN only
-   ufw allow in on tailscale0 to any port 22
-   ufw deny 22
+   ufw allow in on tailscale0
+   ufw deny 22/tcp
+   ```
+
+3. **Monitoring**:
+   ```bash
+   # View VPN Logs
+   journalctl -u tailscaled
+
+   # Check SSH Attempts
+   grep sshd /var/log/auth.log
    ```
 
 ## Troubleshooting
 
-**Tailscale Issues**:
-```bash
-# View logs
-journalctl -u tailscaled
+### Common Issues
 
-# Debug connection
+**Tailscale Connection Failures**
+```bash
 tailscale netcheck
+tailscale ping railway-vpn
 ```
 
-**SSH Connection Problems**:
+**SSH Access Problems**
 ```bash
-# Verify VPN status
-tailscale status
+# Verify Service Status
+docker exec [container] service ssh status
 
-# Check firewall rules
-ufw status verbose
+# Check Ngrok Tunnel
+curl http://localhost:4040/api/tunnels
 ```
 
-**Storage Mount Errors**:
+**Rclone Mount Errors**
 ```bash
-# Debug Rclone
-rclone config show
-rclone ls ${CLOUD_NAME}:
-```
+# Validate Configuration
+docker exec [container] rclone config show
 
-## Network Architecture
-
-```mermaid
-graph TD
-    A[User] -->|Tailscale VPN| B[(Railway Server)]
-    B --> C[Ngrok Tunnel]
-    B --> D[Cloud Storage]
-    B --> E[Flask App]
-    C -->|Fallback Access| A
-    D -->|Rclone Sync| B
+# Test Connection
+docker exec [container] rclone ls ${CLOUD_NAME}:
 ```
 
 ## License
-
-MIT License - See [LICENSE](LICENSE) for details.
+MIT License - See [LICENSE](LICENSE) for full text.
 
 ---
 
 **Maintenance Tips**:
-- Regularly rotate `TAILSCALE_AUTHKEY` every 90 days
-- Monitor VPN connections in Tailscale admin console
-- Use ephemeral nodes for temporary access
-- Enable 2FA on Tailscale account
+- Rotate `TAILSCALE_AUTHKEY` every 90 days
+- Monitor Tailscale Admin Console regularly
+- Use `rclone config reconnect` for storage tokens
+- Enable 2FA on all connected services
+
+**Appendix**:
+- [Project Structure](#project-structure)
+- [Network Architecture Diagram](#network-architecture)
+
+```mermaid
+graph TD
+    A[User] -->|Access Methods| B[Docker Container]
+    B --> C[Flask Web App]
+    B --> D[SSH Server]
+    B --> E[Rclone SFTP]
+    B --> F[Tailscale VPN]
+    
+    subgraph Docker Container
+        C -->|Port 5000| G[Gunicorn Server]
+        D -->|Port 22| H[OpenSSH]
+        D --> I[Ngrok Tunnel]
+        E -->|Port 2022| J[Cloud Storage]
+        F -->|Userspace Networking| K[Tailscale Network]
+    end
+    
+    I --> L[Ngrok Infrastructure]
+    J --> M[Cloud Storage Providers]
+    K --> N[Tailscale Control Plane]
+    
+    A -->|HTTPS| C
+    A -->|SSH| D
+    A -->|SFTP| E
+    A -->|Tailscale VPN| F
+    
+    style B fill:#f,stroke:#333,stroke-width:3px
+    style C fill:#f,stroke:#333
+    style D fill:#f,stroke:#333
+    style E fill:#f,stroke:#333
+    style F fill:#f,stroke:#333
+```
