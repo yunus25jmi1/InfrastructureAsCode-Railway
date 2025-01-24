@@ -51,6 +51,10 @@ COPY rclone.conf /.config/rclone/
 COPY deploy-container/rclone-tasks.json /tmp/rclone-tasks.json
 COPY openssh.sh /openssh.sh
 
+# Add environment-based configuration
+RUN mkdir -p /.config/rclone/
+ENV RCLONE_CONFIG=/app/.rclone.conf
+
 # Copy startup scripts
 COPY openssh.sh /openssh.sh
 COPY start-tailscale.sh /start-tailscale.sh

@@ -1,127 +1,208 @@
-# 🚂 Infrastructure as Code - Railway
+Here's the updated README.md with Tailscale VPN integration details:
 
-**Ever dreamed of having a lifetime VPS for free?** Well, dream on, because that’s not exactly what this project does (but close enough, right?). Welcome to the *Infrastructure as Code - Railway* project, where you can deploy a pseudo-VPS using **Railway** with tools like **Ngrok**, **Rclone**, and **Docker**—because why spend money when you can spend time tinkering with configs? 🎉
+# Infrastructure as Code Railway Deployment
 
----
+![Project Architecture](https://via.placeholder.com/800x400.png?text=Network+Architecture+Diagram)
 
-## 🚀 **Why This Exists**
+A secure infrastructure deployment solution featuring automated VPN access, SSH tunneling, and cloud storage integration.
 
-1. **Tired of paying for cloud services?**  
-   This project helps you **kind of** set up a VPS using Railway’s generous free tier.  
+## Features
 
-2. **Ngrok? Check. Rclone? Check.**  
-   Integrates tunneling, cloud storage, and a questionable obsession with making things work in a container.  
+- 🐳 Docker-based infrastructure with multi-stage builds
+- 🌐 Flask web application with Gunicorn server
+- 🔒 Secure SSH access via Ngrok tunneling
+- ☁️ Rclone integration for cloud storage management
+- 🛡️ **Automatic Tailscale VPN** with subnet routing
+- 📡 DNS-over-TLS with Stubby configuration
+- 🔑 MagicDNS for human-readable hostnames
+- 📦 Deployment-ready for Heroku/Render
 
-3. **Deploy Faster than You Can Read This!**  
-   Just click the magical button below and let the chaos begin.  
+## Prerequisites
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/BzFWCH?referralCode=dG01iI)
+- Docker 20.10+
+- [Tailscale Account](https://tailscale.com)
+- Ngrok Auth Token
+- Python 3.12+
+- Cloud Storage Provider (Google Drive, etc.)
 
----
+## Installation
 
-## 🛠️ **Project Features**
+```bash
+git clone https://github.com/yunus25jmi1/infrastructureascode-railway.git
+cd yunus25jmi1-infrastructureascode-railway
+cp .env.example .env
+```
 
-- **🚀 Free Tier VPS-like Setup:** 7GB RAM, 1.2TB of storage, 69 CPUs (nice), and speeds you’ll never realistically hit—up to 100Gbps.  
-- **🔗 Integrated Ngrok Tunneling:** Expose your services to the world (or hackers, who knows).  
-- **☁️ Cloud Storage with Rclone:** Because local storage is overrated.  
-- **📦 Dockerized Environment:** Fully containerized setup because everyone loves bloated images.  
-- **⚙️ Auto SSH Configuration:** Root access with a pre-configured password (*security? what’s that?*).
+## Configuration
 
----
+### Environment Variables (.env)
+```ini
+# Core
+NGROK_TOKEN=your_ngrok_token
+PORT=22
 
-## 🐍 **Tech Stack**
+# Tailscale VPN
+TAILSCALE_AUTHKEY=tskey-auth-xxxxxxxxx  # REQUIRED
+TAILSCALE_HOSTNAME=railway-vpn
+TAILSCALE_ADVERTISE_ROUTES=10.0.0.0/24,192.168.1.0/24
+TAILSCALE_TAGS=tag:ssh-server,tag:production
 
-- **Python (Flask + Gunicorn):** Who doesn’t love running an HTTP server on steroids?  
-- **Docker:** Containers within containers, because *Inception* was cool.  
-- **Ngrok:** Tunnels so good, you might forget your IP address.  
-- **Rclone:** Sync all the things! (Even when you don’t want to).  
-- **Railway:** The unsung hero funding your free cloud ambitions.  
+# Rclone
+CLOUD_NAME=your-cloud-storage
+SUB_DIR=/backups
+BASE_CONF=base64_encoded_rclone_config
+```
 
----
+### Tailscale Setup
+1. **Create Auth Key**:
+   - Go to [Tailscale Admin Console](https://login.tailscale.com/admin/settings/keys)
+   - Generate reusable key with:
+     - Ephemeral: Enabled
+     - Tags: `tag:ssh-server`
+     - Expiry: 90 days
 
-## 🎯 **How It Works**
+2. **Configure ACLs** (optional):
+```json
+{
+  "acls": [
+    {
+      "action": "accept",
+      "src": ["autogroup:members"],
+      "dst": ["tag:ssh-server:*"]
+    }
+  ]
+}
+```
 
-1. **Ngrok Integration:**  
-   - Set up a tunnel to expose your services.  
-   - Share your endpoint with friends, enemies, or random strangers.  
+## Deployment
 
-2. **Rclone Configuration:**  
-   - Sync your favorite files to your preferred cloud service—no questions asked.  
+### Local Docker Setup
+```bash
+docker build -t infra-railway .
+docker run -d --env-file .env \
+  --cap-add=NET_ADMIN \
+  -p 22:22 \
+  -p 5000:5000 \
+  infra-railway
+```
 
-3. **Pre-configured SSH Access:**  
-   - Root password is set to `Demo12345`. (Yes, it’s hardcoded. No, we don’t care).  
+### Cloud Deployment (Heroku/Render)
+1. Add environment variables to your cloud provider
+2. Enable these permissions:
+   - **NET_ADMIN** capability
+   - **Persistent storage** (for Rclone)
+3. Deploy using included `heroku.yml` or `render.yaml`
 
-4. **Flask App:**  
-   - Minimal app to keep things running. Visit `/` and admire the pointless page it serves.
+## VPN & Network Access
 
----
+### Connect via Tailscale
+```bash
+# Install Tailscale client
+curl -fsSL https://tailscale.com/install.sh | sh
 
-## 🛑 **Known Limitations**
+# Connect to your network
+tailscale up --ssh
+```
 
-- **🔒 Security? Never heard of it!**  
-   - Hardcoded passwords, open ports, and an Ngrok token lying around? Hackers will love you.  
+### Access Methods
+| Service       | Protocol | Address                    |
+|---------------|----------|----------------------------|
+| SSH           | TCP      | `railway-vpn:22`           |
+| Web Interface | HTTP     | `railway-vpn:5000`         |
+| SFTP          | SSH      | `sftp://railway-vpn:22`    |
+| VPN Subnets   | -        | `10.0.0.0/24, 192.168.1.0/24` |
 
-- **🖥️ Overloaded Dockerfile:**  
-   - Who needs clean builds when you can cram everything into one image?  
+## Usage Examples
 
-- **⚠️ Rclone Config:**  
-   - You’re expected to somehow manage your cloud storage configuration. Good luck.  
+### SSH Access via VPN
+```bash
+ssh root@railway-vpn
+# Password: Demo1234
+```
 
-- **📉 Free Tier Constraints:**  
-   - Don’t expect to run anything serious—Railway might throttle or stop your container if it gets too “enthusiastic.”  
+### Mount Cloud Storage
+```bash
+# Local mount point
+mkdir -p /mnt/cloud-storage
 
----
+# Mount via SSHFS
+sshfs -o allow_other root@railway-vpn:/app/storage /mnt/cloud-storage
+```
 
-## 🛡️ **How to Deploy**
+### Verify VPN Status
+```bash
+# Check advertised routes
+tailscale status
 
-### 1️⃣ Prerequisites
-- **Ngrok Account:** [Sign Up](https://dashboard.ngrok.com/).  
-- **Railway Account:** [Create One](https://railway.app?referralCode=BwO6_M).  
-- **NGROK_TOKEN:** Grab it from your Ngrok dashboard.  
-- A sense of adventure (or despair).
+# Test connectivity
+tailscale ping railway-vpn
+```
 
-### 2️⃣ Deploy Steps
-1. Clone this repo:  
+## Security Configuration
+
+1. **Rotate Credentials**:
    ```bash
-   git clone https://github.com/yunus25jmi1/InfrastructureAsCode-Railway.git
-   cd InfrastructureAsCode-Railway
-   ```  
+   # Change SSH password
+   echo "root:$(openssl rand -base64 12)" | chpasswd
 
-2. Click the Railway deploy button or run it locally with Docker if you enjoy debugging errors:  
+   # Rotate Tailscale key
+   tailscale logout && tailscale up --authkey=new-key
+   ```
+
+2. **Network Hardening**:
    ```bash
-   docker build -t iac-railway .
-   docker run -p 8080:8080 iac-railway
-   ```  
+   # Restrict SSH to VPN only
+   ufw allow in on tailscale0 to any port 22
+   ufw deny 22
+   ```
 
-3. Pray everything works.
+## Troubleshooting
+
+**Tailscale Issues**:
+```bash
+# View logs
+journalctl -u tailscaled
+
+# Debug connection
+tailscale netcheck
+```
+
+**SSH Connection Problems**:
+```bash
+# Verify VPN status
+tailscale status
+
+# Check firewall rules
+ufw status verbose
+```
+
+**Storage Mount Errors**:
+```bash
+# Debug Rclone
+rclone config show
+rclone ls ${CLOUD_NAME}:
+```
+
+## Network Architecture
+
+```mermaid
+graph TD
+    A[User] -->|Tailscale VPN| B[(Railway Server)]
+    B --> C[Ngrok Tunnel]
+    B --> D[Cloud Storage]
+    B --> E[Flask App]
+    C -->|Fallback Access| A
+    D -->|Rclone Sync| B
+```
+
+## License
+
+MIT License - See [LICENSE](LICENSE) for details.
 
 ---
 
-## 🧐 **Why Should You Use This?**
-
-- **Because you can.**  
-- **Because free stuff is fun.**  
-- **Because debugging is the best way to spend your weekends.**  
-
----
-
-## 📚 **FAQs**
-
-**Q: Is this secure?**  
-A: Define "secure."  
-
-**Q: Can I run a production app with this?**  
-A: Sure, if you hate your users.  
-
-**Q: Why is this project sarcastic?**  
-A: Because we can be.  
-
----
-
-## 📜 **License**  
-
-MIT License. Feel free to break stuff and blame us.  
-
----
-
-Let me know if you'd like to tweak anything further! 😊
+**Maintenance Tips**:
+- Regularly rotate `TAILSCALE_AUTHKEY` every 90 days
+- Monitor VPN connections in Tailscale admin console
+- Use ephemeral nodes for temporary access
+- Enable 2FA on Tailscale account
