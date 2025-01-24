@@ -296,7 +296,9 @@ graph TD
 | **Cloud Storage**   | Rclone cloud integration                     | `rclone.conf`, `run.sh`       |
 | **DNS Security**    | Stubby DNS-over-TLS configuration           | `stubby/stubby.yml`           |
 | **Deployment**      | Multi-cloud deployment configs               | `render.yaml`, `heroku.yml`   |
-```
+
+
+
 **Maintenance Tips**:
 - Rotate `TAILSCALE_AUTHKEY` every 90 days
 - Monitor Tailscale Admin Console regularly
