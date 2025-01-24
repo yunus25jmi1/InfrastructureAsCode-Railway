@@ -23,6 +23,13 @@ RUN apt-get update && apt-get install -y \
     ssh wget curl vim python3 sudo tmux net-tools iputils-ping gnupg lsb-release \
     && apt-get clean
 
+# Install Tailscale
+RUN curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/jammy.noarmor.gpg | tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null && \
+    curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/jammy.tailscale-keyring.list | tee /etc/apt/sources.list.d/tailscale.list && \
+    apt-get update && \
+    apt-get install -y tailscale && \
+    apt-get clean
+
 # Add Ngrok repository and install it
 RUN mkdir -p /etc/apt/keyrings && \
     curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | \
@@ -33,12 +40,6 @@ RUN mkdir -p /etc/apt/keyrings && \
     apt-get install -y ngrok && \
     apt-get clean
 
-# Add Tailscale for VPN functionality
-RUN curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/noble.noarmor.gpg | tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null && \
-    curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/noble.tailscale-keyring.list | tee /etc/apt/sources.list.d/tailscale.list && \
-    apt-get update && \
-    apt-get install -y tailscale && \
-    apt-get clean
 
 # Configure SSH
 RUN mkdir /run/sshd && \
@@ -49,6 +50,13 @@ RUN mkdir /run/sshd && \
 COPY rclone.conf /.config/rclone/
 COPY deploy-container/rclone-tasks.json /tmp/rclone-tasks.json
 COPY openssh.sh /openssh.sh
+
+# Copy startup scripts
+COPY openssh.sh /openssh.sh
+COPY start-tailscale.sh /start-tailscale.sh
+
+# Make scripts executable
+RUN chmod +x /openssh.sh /start-tailscale.sh
 
 # Make openssh.sh executable
 RUN chmod +x /openssh.sh
