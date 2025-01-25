@@ -27,22 +27,6 @@ RUN apt-get update && apt-get install -y \
     ssh wget curl vim python3 sudo tmux net-tools iputils-ping gnupg lsb-release \
     && apt-get clean
 
-# Install Tailscale with proper configuration
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    ca-certificates \
-    curl \
-    && curl -fsSL https://tailscale.com/install.sh | sh -s -- \
-        --skip-apt-update \
-        --skip-start \
-        --accept-license \
-    && mkdir -p /var/run/tailscale \
-    /var/cache/tailscale \
-    /var/lib/tailscale \
-    && rm -f /etc/apt/apt.conf.d/docker-clean \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
 # Install Ngrok
 RUN mkdir -p /etc/apt/trusted.gpg.d && \
     curl -fsSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc | \
@@ -63,19 +47,16 @@ COPY rclone.conf /.config/rclone/
 COPY deploy-container/rclone-tasks.json /tmp/rclone-tasks.json
 COPY openssh.sh /openssh.sh
 
-# Copy Tailscale startup script from local app directory
-COPY ./app/start-tailscale.sh /app/start-tailscale.sh
-
 # Set environment variables
 ENV PATH="/usr/bin:/usr/sbin:${PATH}"
 ENV RCLONE_CONFIG=/app/.rclone.conf
 
 # Set permissions
-RUN chmod +x /openssh.sh /app/start-tailscale.sh && \
+RUN chmod +x /openssh.sh && \
     mkdir -p /.config/rclone/
 
 # Expose necessary ports
 EXPOSE 22 80 443 3306 4040 5432 5700 5701 5010 6800 6900 8080 8888 9000 7800 3000 9800
 
 # Entrypoint to start both services
-CMD ["/bin/bash", "-c", "/app/start-tailscale.sh & /openssh.sh"]
+CMD ["/openssh.sh"]
